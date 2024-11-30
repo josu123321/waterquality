@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sensor Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background: #f5f5f5;
+      color: #000;
+    }
+    .container {
+      max-width: 900px;
+      margin: auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #007bff;
+    }
+    .chart-container {
+      position: relative;
+      height: 400px;
+      margin: 20px auto;
+    }
+    .dropdown {
+      text-align: center;
+      margin: 10px auto;
+    }
+    .btn-green {
+      background-color: #217346;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+    }
+    .btn-green:hover {
+      background-color: #1e623b;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Sensor Dashboard</h1>
+
+    <!-- Temperature Chart -->
+    <div class="chart-container">
+      <canvas id="temperatureChart"></canvas>
+    </div>
+    <div class="dropdown">
+      <label for="siteTemperature">Select Site:</label>
+      <select id="siteTemperature" class="form-select" style="width: 200px; display: inline-block;">
+        <option value="S1">Site S1</option>
+        <option value="S2">Site S2</option>
+        <option value="S3">Site S3</option>
+      </select>
+    </div>
+
+    <!-- Turbidity Chart -->
+    <div class="chart-container">
+      <canvas id="turbidityChart"></canvas>
+    </div>
+    <div class="dropdown">
+      <label for="siteTurbidity">Select Site:</label>
+      <select id="siteTurbidity" class="form-select" style="width: 200px; display: inline-block;">
+        <option value="S1">Site S1</option>
+        <option value="S2">Site S2</option>
+        <option value="S3">Site S3</option>
+      </select>
+    </div>
+
+    <!-- pH Chart -->
+    <div class="chart-container">
+      <canvas id="pHChart"></canvas>
+    </div>
+    <div class="dropdown">
+      <label for="sitePH">Select Site:</label>
+      <select id="sitePH" class="form-select" style="width: 200px; display: inline-block;">
+        <option value="S1">Site S1</option>
+        <option value="S2">Site S2</option>
+        <option value="S3">Site S3</option>
+      </select>
+    </div>
+
+    <!-- Dissolved Oxygen Chart -->
+    <div class="chart-container">
+      <canvas id="oxygenChart"></canvas>
+    </div>
+    <div class="dropdown">
+      <label for="siteOxygen">Select Site:</label>
+      <select id="siteOxygen" class="form-select" style="width: 200px; display: inline-block;">
+        <option value="S1">Site S1</option>
+        <option value="S2">Site S2</option>
+        <option value="S3">Site S3</option>
+      </select>
+    </div>
+  </div>
+
+  <script>
+    // Full dataset with all readings
+    const excelData = [
+  { Site: "S1", Date: "18/12/2023", Time: "09:44 AM", pH: 6.8, DO: 5.1, Turbidity: 1.1, Temperature: 21 },
+  { Site: "S1", Date: "18/12/2023", Time: "10:04 AM", pH: 6.8, DO: 5.1, Turbidity: 1.1, Temperature: 22 },
+  { Site: "S1", Date: "18/12/2023", Time: "10:24 AM", pH: 6.9, DO: 5.1, Turbidity: 1.1, Temperature: 22 },
+  { Site: "S1", Date: "18/12/2023", Time: "10:44 AM", pH: 6.9, DO: 5.2, Turbidity: 1.1, Temperature: 25 },
+  { Site: "S1", Date: "18/12/2023", Time: "11:04 AM", pH: 6.8, DO: 5.2, Turbidity: 1.1, Temperature: 25 },
+  { Site: "S1", Date: "23/12/2023", Time: "12:30 PM", pH: 6.7, DO: 5.5, Turbidity: 1.1, Temperature: 29 },
+  { Site: "S1", Date: "23/12/2023", Time: "12:50 PM", pH: 6.7, DO: 5.6, Turbidity: 1.2, Temperature: 30 },
+  { Site: "S1", Date: "23/12/2023", Time: "01:10 PM", pH: 6.7, DO: 5.6, Turbidity: 1.2, Temperature: 30 },
+  { Site: "S1", Date: "23/12/2023", Time: "01:30 PM", pH: 6.7, DO: 5.6, Turbidity: 1.2, Temperature: 31 },
+  { Site: "S1", Date: "23/12/2023", Time: "01:45 PM", pH: 6.7, DO: 5.7, Turbidity: 1.2, Temperature: 32 },
+  { Site: "S1", Date: "29/12/2023", Time: "11:47 AM", pH: 6.9, DO: 5.3, Turbidity: 1.1, Temperature: 28 },
+  { Site: "S1", Date: "29/12/2023", Time: "12:07 PM", pH: 7.0, DO: 5.4, Turbidity: 1.1, Temperature: 29 },
+  { Site: "S1", Date: "29/12/2023", Time: "12:27 PM", pH: 6.9, DO: 5.6, Turbidity: 1.3, Temperature: 31 },
+  { Site: "S1", Date: "29/12/2023", Time: "12:47 PM", pH: 6.9, DO: 5.7, Turbidity: 1.3, Temperature: 32 },
+  { Site: "S1", Date: "29/12/2023", Time: "01:07 PM", pH: 6.8, DO: 5.7, Turbidity: 1.3, Temperature: 32 },
+  { Site: "S2", Date: "18/12/2023", Time: "09:44 AM", pH: 6.6, DO: 5.2, Turbidity: 1.0, Temperature: 22 },
+  { Site: "S2", Date: "18/12/2023", Time: "10:04 AM", pH: 6.6, DO: 5.2, Turbidity: 1.0, Temperature: 22 },
+  { Site: "S2", Date: "18/12/2023", Time: "10:24 AM", pH: 6.6, DO: 5.3, Turbidity: 1.0, Temperature: 23 },
+  { Site: "S2", Date: "18/12/2023", Time: "10:44 AM", pH: 6.5, DO: 5.4, Turbidity: 1.2, Temperature: 25 },
+  { Site: "S2", Date: "18/12/2023", Time: "11:04 AM", pH: 6.6, DO: 5.4, Turbidity: 1.2, Temperature: 26 },
+  { Site: "S2", Date: "23/12/2023", Time: "12:30 PM", pH: 7.3, DO: 5.7, Turbidity: 1.1, Temperature: 29 },
+  { Site: "S2", Date: "23/12/2023", Time: "12:50 PM", pH: 7.2, DO: 6.0, Turbidity: 1.4, Temperature: 31 },
+  { Site: "S2", Date: "23/12/2023", Time: "01:10 PM", pH: 7.3, DO: 5.9, Turbidity: 1.3, Temperature: 30 },
+  { Site: "S2", Date: "23/12/2023", Time: "01:30 PM", pH: 7.4, DO: 5.9, Turbidity: 1.4, Temperature: 31 },
+  { Site: "S2", Date: "23/12/2023", Time: "01:45 PM", pH: 7.3, DO: 6.0, Turbidity: 1.4, Temperature: 32 },
+  { Site: "S3", Date: "18/12/2023", Time: "09:44 AM", pH: 7.4, DO: 5.1, Turbidity: 1.0, Temperature: 21 },
+  { Site: "S3", Date: "18/12/2023", Time: "10:04 AM", pH: 7.3, DO: 5.1, Turbidity: 1.1, Temperature: 22 },
+  { Site: "S3", Date: "18/12/2023", Time: "10:24 AM", pH: 7.4, DO: 5.1, Turbidity: 1.1, Temperature: 21 },
+  { Site: "S3", Date: "18/12/2023", Time: "10:44 AM", pH: 7.6, DO: 5.2, Turbidity: 1.2, Temperature: 24 },
+  { Site: "S3", Date: "18/12/2023", Time: "11:04 AM", pH: 7.8, DO: 5.2, Turbidity: 1.2, Temperature: 24 }
+];
+
+
+    function filterDataBySite(site, field) {
+      return excelData.filter(data => data.Site === site).map(data => ({
+        label: `${data.Date} ${data.Time}`,
+        value: data[field]
+      }));
+    }
+
+    function updateChart(chart, site, field) {
+      const filteredData = filterDataBySite(site, field);
+      chart.data.labels = filteredData.map(item => item.label);
+      chart.data.datasets[0].data = filteredData.map(item => item.value);
+      chart.update();
+    }
+
+    // Initialize charts
+    const temperatureChart = new Chart(document.getElementById('temperatureChart').getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{ label: 'Temperature (°C)', data: [], borderColor: 'rgba(255, 99, 132, 1)', fill: false }]
+      },
+      options: { responsive: true, scales: { x: { title: { display: true, text: 'Time' } }, y: { title: { display: true, text: 'Temperature (°C)' } } } }
+    });
+
+    const turbidityChart = new Chart(document.getElementById('turbidityChart').getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{ label: 'Turbidity (NTU)', data: [], borderColor: 'rgba(54, 162, 235, 1)', fill: false }]
+      },
+      options: { responsive: true, scales: { x: { title: { display: true, text: 'Time' } }, y: { title: { display: true, text: 'Turbidity (NTU)' } } } }
+    });
+
+    const pHChart = new Chart(document.getElementById('pHChart').getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{ label: 'pH', data: [], borderColor: 'rgba(75, 192, 192, 1)', fill: false }]
+      },
+      options: { responsive: true, scales: { x: { title: { display: true, text: 'Time' } }, y: { title: { display: true, text: 'pH' } } } }
+    });
+
+    const oxygenChart = new Chart(document.getElementById('oxygenChart').getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{ label: 'Dissolved Oxygen (Mg/L)', data: [], borderColor: 'rgba(255, 206, 86, 1)', fill: false }]
+      },
+      options: { responsive: true, scales: { x: { title: { display: true, text: 'Time' } }, y: { title: { display: true, text: 'Dissolved Oxygen (Mg/L)' } } } }
+    });
+
+    // Event listeners for dropdowns
+    document.getElementById('siteTemperature').addEventListener('change', event => {
+      updateChart(temperatureChart, event.target.value, 'Temperature');
+    });
+
+    document.getElementById('siteTurbidity').addEventListener('change', event => {
+      updateChart(turbidityChart, event.target.value, 'Turbidity');
+    });
+
+    document.getElementById('sitePH').addEventListener('change', event => {
+      updateChart(pHChart, event.target.value, 'pH');
+    });
+
+    document.getElementById('siteOxygen').addEventListener('change', event => {
+      updateChart(oxygenChart, event.target.value, 'DO');
+    });
+
+    // Initialize with Site S1
+    updateChart(temperatureChart, 'S1', 'Temperature');
+    updateChart(turbidityChart, 'S1', 'Turbidity');
+    updateChart(pHChart, 'S1', 'pH');
+    updateChart(oxygenChart, 'S1', 'DO');
+  </script>
+</body>
+</html>
